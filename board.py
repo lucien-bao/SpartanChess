@@ -1,12 +1,13 @@
 #!usr/bin/env python3
-"""The chess board for SpartanChess."""
+"""The chess board for SpartanChess. Note that board indices follow
+ranks 1 to 8 and files a to h."""
 
 __author__ = "Chris Bao"
 __version__ = "0.9"
 __date__ = "19 Nov 2022"
 
 # external imports
-from tkinter import Tk, Canvas
+from tkinter import Tk, Canvas, Event
 from PIL.ImageTk import PhotoImage
 
 # internal imports
@@ -23,6 +24,8 @@ class Board(Canvas):
     # instance variables
     size: int
     state: list[list[Piece]]
+    selectedR: int
+    selectedF: int
     # to keep images from being garbage collected. this is a known bug.
     imageList: list[PhotoImage] = []
 
@@ -48,6 +51,47 @@ class Board(Canvas):
             height=self.size
         )
         self.initBoard()
+        self.draw()
+
+        self.bind("<Button-1>", self.mousePressed)
+        self.bind("<ButtonRelease-1>", self.mouseReleased)
+
+    def mousePressed(self, event: Event) -> None:
+        """
+        Handle mouse-press events. Manages movement of pieces.
+
+        Parameters
+        ---
+        event: Event given by tkinter event handler on mouse press.
+
+        Returns
+        ---
+        None
+        """
+        self.selectedR = 7 - int(event.y / self.size * 7)
+        self.selectedF = int(event.x / self.size * 8)
+
+    def mouseReleased(self, event: Event) -> None:
+        """
+        Handle mouse-release events. Manages movement of pieces.
+
+        Parameters
+        ---
+        event: Event given by tkinter event handler on mouse release.
+
+        Returns
+        ---
+        None
+        """
+        # TODO: NOT WORKING!!!
+        targetR = 7 - int(event.y / self.size * 7)
+        targetF = int(event.x / self.size * 8)
+        if self.selectedR == targetR and self.selectedF == targetF:
+            return
+        self.state[targetR][targetF] = self.state[self.selectedR][self.selectedF]
+        self.state[self.selectedR][self.selectedF] = Piece(Piece.EMPTY,
+                                                           self.selectedR,
+                                                           self.selectedF)
         self.draw()
 
     def initBoard(self) -> None:
@@ -98,15 +142,19 @@ class Board(Canvas):
         ---
         None
         """
-        self.size = min(self.master.winfo_width() * self.SCALE_RATIO,
-                        self.master.winfo_height() * self.SCALE_RATIO)
-        self.configure(width=self.size,
-                       height=self.size)
-        self.draw()
+        newSize = min(self.master.winfo_width() * self.SCALE_RATIO,
+                      self.master.winfo_height() * self.SCALE_RATIO)
+        if newSize != self.size:
+            self.size = newSize
+            self.configure(width=self.size,
+                           height=self.size)
+            Piece.icons_cached = False
+            self.draw()
 
     def draw(self) -> None:
         """
-        Draw everything to the board.
+        Draw everything to the board. Note: this will clear all previously
+        drawn graphics!
 
         Parameters
         ---
@@ -135,3 +183,5 @@ class Board(Canvas):
 
                 # draw piece (on top)
                 self.state[r][f].draw(self)
+
+        Piece.icons_cached = True

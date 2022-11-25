@@ -34,6 +34,7 @@ def resize_update(_: Event) -> None:
     ---
     None
     """
+    # get tkinter to update window dimensions correctly
     window.update_idletasks()
     board.place_forget()
     board.resize()

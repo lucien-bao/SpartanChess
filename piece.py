@@ -29,7 +29,7 @@ class Piece:
     WARLORD: int = 14
     SKING: int = 15
 
-    icon_map: dict = {
+    ICON_MAP: dict = {
         PAWN: Image.open("img/pawn.png"),
         KNIGHT: Image.open("img/knight.png"),
         BISHOP: Image.open("img/bishop.png"),
@@ -44,6 +44,10 @@ class Piece:
         WARLORD: Image.open("img/warlord.png"),
         SKING: Image.open("img/sking.png"),
     }
+
+    # static variables
+    icon_cache: dict = {}
+    icons_cached: bool = False
 
     # instance varaibles
     id: int
@@ -65,7 +69,7 @@ class Piece:
         self.r = r
         self.f = f
 
-    def draw(self, canvas: Canvas) -> None:
+    def draw(self, canvas: Canvas, forceX: int = None, forceY: int = None) -> None:
         """
         Draw self to given canvas.
 
@@ -79,16 +83,26 @@ class Piece:
         """
         if self.id == self.EMPTY:
             return
-        resized = self.icon_map[self.id].resize((int(canvas.size / 8),)*2)
-        icon = ImageTk.PhotoImage(resized)
+        if Piece.icons_cached:
+            canvas.create_image(canvas.size * self.f // 8,
+                                canvas.size * (7-self.f) // 8,
+                                anchor="nw", image=Piece.icon_cache[self.id])
+            return
+
+        resized = self.ICON_MAP[self.id].resize((int(canvas.size / 8),)*2)
+        Piece.icon_cache[self.id] = icon = ImageTk.PhotoImage(resized)
         # subtract rank from 7 bc ranks go from high to low
-        canvas.create_image(canvas.size * self.f // 8,
-                            canvas.size * (7-self.r) // 8,
-                            anchor="nw", image=icon)
+        if forceX is None:
+            canvas.create_image(canvas.size * self.f // 8,
+                                canvas.size * (7-self.r) // 8,
+                                anchor="nw", image=icon)
+        else:
+            canvas.create_image(forceX, forceY, anchor="nw", image=icon)
         canvas.imageList.append(icon)
 
     def inCheckAfterMove(start: tuple[int, int], end: tuple[int, int],
                          whiteToMove: bool) -> bool:
+        # TODO: implement check detection
         return False
 
     def findLegalMoves(r: int, f: int, board: list[list], whiteToMove: bool,
@@ -111,6 +125,8 @@ class Piece:
         ---
         set[tuple[int, int]]: set of valid (rank, file) tuples
         """
+        return True
+        # TODO: implement finding legal moves for all pieces
         print(board[r][f].id)
         if board[r][f].id == Piece.PAWN:
             valid = set()
