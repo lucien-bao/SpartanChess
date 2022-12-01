@@ -51,6 +51,7 @@ class Board(Canvas):
             height=self.size
         )
         self.initBoard()
+        Piece.loadIcons()
         self.draw()
 
         self.bind("<Button-1>", self.mousePressed)
@@ -68,7 +69,7 @@ class Board(Canvas):
         ---
         None
         """
-        self.selectedR = 7 - int(event.y / self.size * 7)
+        self.selectedR = 7 - int(event.y / self.size * 8)
         self.selectedF = int(event.x / self.size * 8)
 
     def mouseReleased(self, event: Event) -> None:
@@ -84,14 +85,18 @@ class Board(Canvas):
         None
         """
         # TODO: NOT WORKING!!!
-        targetR = 7 - int(event.y / self.size * 7)
+        targetR = 7 - int(event.y / self.size * 8)
         targetF = int(event.x / self.size * 8)
         if self.selectedR == targetR and self.selectedF == targetF:
             return
+
         self.state[targetR][targetF] = self.state[self.selectedR][self.selectedF]
+        self.state[targetR][targetF].r = targetR
+        self.state[targetR][targetF].f = targetF
         self.state[self.selectedR][self.selectedF] = Piece(Piece.EMPTY,
                                                            self.selectedR,
                                                            self.selectedF)
+
         self.draw()
 
     def initBoard(self) -> None:
@@ -142,10 +147,18 @@ class Board(Canvas):
         ---
         None
         """
-        newSize = min(self.master.winfo_width() * self.SCALE_RATIO,
-                      self.master.winfo_height() * self.SCALE_RATIO)
-        if newSize != self.size:
-            self.size = newSize
+        allowable = min(self.master.winfo_width() * self.SCALE_RATIO,
+                        self.master.winfo_height() * self.SCALE_RATIO)
+        # "snap" board size to fit either small, medium, or large
+        if allowable >= Piece.LARGE_SIZE * 8:
+            allowable = Piece.LARGE_SIZE * 8
+        elif allowable >= Piece.MEDIUM_SIZE * 8:
+            allowable = Piece.MEDIUM_SIZE * 8
+        else:
+            allowable = Piece.SMALL_SIZE * 8
+
+        if allowable != self.size:
+            self.size = allowable
             self.configure(width=self.size,
                            height=self.size)
             Piece.icons_cached = False

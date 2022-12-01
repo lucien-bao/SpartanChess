@@ -60,7 +60,7 @@ def main() -> None:
     SCREEN_WIDTH = window.winfo_screenwidth()
     SCREEN_HEIGHT = window.winfo_screenheight()
     window.geometry(f"{SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-    window.minsize(720, 500)
+    window.minsize(800, 600)
     window.title("SpartanChess")
     window.config(bg=DARK_BG_COLOR)
 

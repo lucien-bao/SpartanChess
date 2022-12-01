@@ -45,11 +45,15 @@ class Piece:
         SKING: Image.open("img/sking.png"),
     }
 
-    # static variables
-    icon_cache: dict = {}
-    icons_cached: bool = False
+    # icon (piece) sizes, px
+    SMALL_SIZE: int = 40
+    MEDIUM_SIZE: int = 72
+    LARGE_SIZE: int = 96
 
-    # instance varaibles
+    # static variables
+    iconsLarge: dict = {}
+
+    # instance variables
     id: int
     # rank and file
     r: int
@@ -69,6 +73,29 @@ class Piece:
         self.r = r
         self.f = f
 
+    def loadIcons():
+        """
+        Loads the images for the pieces into memory.
+
+        Parameters
+        ---
+        (no parameters)
+
+        Returns
+        ---
+        None
+        """
+        # TODO: load icons of different sizes
+        # Persian (white) pieces
+        for i in range(0, 6):
+            Piece.iconsLarge[i] = ImageTk.PhotoImage(Piece.ICON_MAP[i].resize(
+                (Piece.LARGE_SIZE, Piece.LARGE_SIZE)))
+        # Spartan (black) pieces
+        for i in range(10, 16):
+            Piece.iconsLarge[i] = ImageTk.PhotoImage(Piece.ICON_MAP[i].resize(
+                (Piece.LARGE_SIZE, Piece.LARGE_SIZE)))
+        print(Piece.iconsLarge)
+
     def draw(self, canvas: Canvas, forceX: int = None, forceY: int = None) -> None:
         """
         Draw self to given canvas.
@@ -83,15 +110,8 @@ class Piece:
         """
         if self.id == self.EMPTY:
             return
-        if Piece.icons_cached:
-            canvas.create_image(canvas.size * self.f // 8,
-                                canvas.size * (7-self.f) // 8,
-                                anchor="nw", image=Piece.icon_cache[self.id])
-            return
 
-        resized = self.ICON_MAP[self.id].resize((int(canvas.size / 8),)*2)
-        Piece.icon_cache[self.id] = icon = ImageTk.PhotoImage(resized)
-        # subtract rank from 7 bc ranks go from high to low
+        icon = Piece.iconsLarge[self.id]
         if forceX is None:
             canvas.create_image(canvas.size * self.f // 8,
                                 canvas.size * (7-self.r) // 8,
@@ -106,7 +126,8 @@ class Piece:
         return False
 
     def findLegalMoves(r: int, f: int, board: list[list], whiteToMove: bool,
-                       whiteShort: bool, whiteLong: bool, blackShort: bool, blackLong: bool) -> set[tuple[int, int]]:
+                       whiteShort: bool, whiteLong: bool, blackShort: bool,
+                       blackLong: bool) -> set[tuple[int, int]]:
         """
         Finds the legal moves for a given piece, board, and turn.
 
