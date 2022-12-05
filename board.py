@@ -23,10 +23,14 @@ class Board(Canvas):
 
     # instance variables
     size: int
+    iconSize: int
     state: list[list[Piece]]
-    selectedR: int
-    selectedF: int
-    # to keep images from being garbage collected. this is a known bug.
+    selectedR: int = -1
+    selectedF: int = -1
+    mouseX: int
+    mouseY: int
+    # to keep images from being garbage collected.
+    #   this is a known bug in tkinter.
     imageList: list[PhotoImage] = []
 
     def __init__(self, window: Tk) -> None:
@@ -45,17 +49,20 @@ class Board(Canvas):
                         window.winfo_height() * self.SCALE_RATIO)
         super().__init__(
             master=window,
+            bg=Board.LIGHT_SQUARE_COLOR,
             borderwidth=0,
             highlightthickness=0,
             width=self.size,
             height=self.size
         )
-        self.initBoard()
         Piece.loadIcons()
+        self.initBoard()
+        self.resize()
         self.draw()
 
         self.bind("<Button-1>", self.mousePressed)
         self.bind("<ButtonRelease-1>", self.mouseReleased)
+        self.bind("<B1-Motion>", self.mouseDragged)
 
     def mousePressed(self, event: Event) -> None:
         """
@@ -69,8 +76,11 @@ class Board(Canvas):
         ---
         None
         """
+        self.mouseX = event.x
+        self.mouseY = event.y
         self.selectedR = 7 - int(event.y / self.size * 8)
         self.selectedF = int(event.x / self.size * 8)
+        self.draw()  # redraw so we can have ghost piece
 
     def mouseReleased(self, event: Event) -> None:
         """
@@ -84,20 +94,62 @@ class Board(Canvas):
         ---
         None
         """
-        # TODO: NOT WORKING!!!
         targetR = 7 - int(event.y / self.size * 8)
         targetF = int(event.x / self.size * 8)
+        # "move" piece to its own square
+        # TODO: enable click squares method of moving pieces
         if self.selectedR == targetR and self.selectedF == targetF:
+            self.selectedR = self.selectedF = -1
+            self.draw()
+            return
+        # don't allow "moving" empty pieces
+        if self.state[self.selectedR][self.selectedF].id == Piece.EMPTY:
             return
 
-        self.state[targetR][targetF] = self.state[self.selectedR][self.selectedF]
-        self.state[targetR][targetF].r = targetR
-        self.state[targetR][targetF].f = targetF
-        self.state[self.selectedR][self.selectedF] = Piece(Piece.EMPTY,
-                                                           self.selectedR,
-                                                           self.selectedF)
-
+        self.attemptMove(self.selectedR, self.selectedF, targetR, targetF)
+        self.selectedR = self.selectedF = -1  # clear selection before draw
         self.draw()
+
+    def attemptMove(self, selectedR: int, selectedF: int,
+                    targetR: int, targetF: int) -> None:
+        """
+        Attempts to move the selected piece to the target square.
+
+        Parameters
+        ---
+        selectedR: int rank of piece to move
+        selectedF: int file of piece to move
+        targetR: int rank of square to move to
+        targetF: int file of square to move to
+
+        Returns
+        ---
+        None
+        """
+        # TODO: this does not check for valid moves!
+        self.state[targetR][targetF] = self.state[selectedR][selectedF]
+        self.state[targetR][targetF].rPos = targetR
+        self.state[targetR][targetF].fPos = targetF
+        self.state[selectedR][selectedF] = Piece(Piece.EMPTY,
+                                                 selectedR,
+                                                 selectedF)
+
+    def mouseDragged(self, event: Event) -> None:
+        """
+        Handle mouse motion while holding mouse1, i.e., dragging.
+
+        Parameters
+        ---
+        event: Event given by the tkinter event handler.
+
+        Returns
+        ---
+        None
+        """
+        self.mouseX = event.x
+        self.mouseY = event.y
+        if self.selectedR != -1:
+            self.draw()
 
     def initBoard(self) -> None:
         """
@@ -150,12 +202,11 @@ class Board(Canvas):
         allowable = min(self.master.winfo_width() * self.SCALE_RATIO,
                         self.master.winfo_height() * self.SCALE_RATIO)
         # "snap" board size to fit either small, medium, or large
-        if allowable >= Piece.LARGE_SIZE * 8:
-            allowable = Piece.LARGE_SIZE * 8
-        elif allowable >= Piece.MEDIUM_SIZE * 8:
-            allowable = Piece.MEDIUM_SIZE * 8
-        else:
-            allowable = Piece.SMALL_SIZE * 8
+        for i in range(4, -1, -1):
+            if allowable >= Piece.ICON_SIZES[i] * 8:
+                allowable = Piece.ICON_SIZES[i] * 8
+                self.iconSize = i
+                break
 
         if allowable != self.size:
             self.size = allowable
@@ -177,6 +228,8 @@ class Board(Canvas):
         ---
         None
         """
+        # TODO: improve performance. everything is getting drawn too much
+        # even when we only need to redraw the piece being dragged.
         self.delete(all)
         self.imageList.clear()
         for r in range(0, 8):  # rank
@@ -195,6 +248,10 @@ class Board(Canvas):
                 )
 
                 # draw piece (on top)
-                self.state[r][f].draw(self)
+                # ignore the currently selected piece
+                if r != self.selectedR or f != self.selectedF:
+                    self.state[r][f].draw(self, self.iconSize)
 
-        Piece.icons_cached = True
+        if self.selectedR != -1:
+            self.state[self.selectedR][self.selectedF].draw(
+                self, self.iconSize, forceX=self.mouseX, forceY=self.mouseY)

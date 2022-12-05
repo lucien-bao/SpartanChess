@@ -1,0 +1,5 @@
+inkscape --without-gui warlord.svg -w 40 -h 40 -o ../0/warlord.png
+inkscape --without-gui warlord.svg -w 55 -h 55 -o ../1/warlord.png
+inkscape --without-gui warlord.svg -w 70 -h 70 -o ../2/warlord.png
+inkscape --without-gui warlord.svg -w 85 -h 85 -o ../3/warlord.png
+inkscape --without-gui warlord.svg -w 100 -h 100 -o ../4/warlord.png
