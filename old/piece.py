@@ -76,7 +76,7 @@ class Piece:
         self.rPos = r
         self.fPos = f
 
-    def loadIcons():
+    def loadIcons(canvas: Canvas):
         """
         Loads the images for the pieces into memory.
 
@@ -93,12 +93,14 @@ class Piece:
             iconDict = {}
             # Persian (white) pieces
             for j in range(0, 6):
-                filePath = "img/" + str(i) + "/" + Piece.ICON_FILE_MAP[j]
+                filePath = "../img/" + str(i) + "/" + Piece.ICON_FILE_MAP[j]
                 iconDict[j] = ImageTk.PhotoImage(file=filePath)
+                canvas.imageList.append(iconDict[j])
             # Spartan (black) pieces
             for j in range(10, 16):
-                filePath = "img/" + str(i) + "/" + Piece.ICON_FILE_MAP[j]
+                filePath = "../img/" + str(i) + "/" + Piece.ICON_FILE_MAP[j]
                 iconDict[j] = ImageTk.PhotoImage(file=filePath)
+                canvas.imageList.append(iconDict[j])
             Piece.icons.append(iconDict)
 
     def draw(self, canvas: Canvas, iconSize: int,
@@ -124,7 +126,6 @@ class Piece:
                                 anchor="nw", image=icon)
         else:
             canvas.create_image(forceX, forceY, anchor="center", image=icon)
-        canvas.imageList.append(icon)
 
     def inCheckAfterMove(start: tuple[int, int], end: tuple[int, int],
                          whiteToMove: bool) -> int:

@@ -55,7 +55,7 @@ class Board(Canvas):
             width=self.size,
             height=self.size
         )
-        Piece.loadIcons()
+        Piece.loadIcons(self)
         self.initBoard()
         self.resize()
         self.draw()
@@ -103,7 +103,7 @@ class Board(Canvas):
             self.draw()
             return
         # don't allow "moving" empty pieces
-        if self.state[self.selectedR][self.selectedF].id == Piece.EMPTY:
+        if self.state[self.selectedR][self.selectedF].pieceId == Piece.EMPTY:
             return
 
         self.attemptMove(self.selectedR, self.selectedF, targetR, targetF)
@@ -231,7 +231,6 @@ class Board(Canvas):
         # TODO: improve performance. everything is getting drawn too much
         # even when we only need to redraw the piece being dragged.
         self.delete(all)
-        self.imageList.clear()
         for r in range(0, 8):  # rank
             for f in range(0, 8):  # file
                 # draw square
