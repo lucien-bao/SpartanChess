@@ -1,5 +1,11 @@
-inkscape --without-gui warlord.svg -w 40 -h 40 -o ../0/warlord.png
-inkscape --without-gui warlord.svg -w 55 -h 55 -o ../1/warlord.png
-inkscape --without-gui warlord.svg -w 70 -h 70 -o ../2/warlord.png
-inkscape --without-gui warlord.svg -w 85 -h 85 -o ../3/warlord.png
-inkscape --without-gui warlord.svg -w 100 -h 100 -o ../4/warlord.png
+inkscape --without-gui bishop.svg -w 90 -h 90 -o ../img/bishop.png
+inkscape --without-gui captain.svg -w 90 -h 90 -o ../img/captain.png
+inkscape --without-gui general.svg -w 90 -h 90 -o ../img/general.png
+inkscape --without-gui hoplite.svg -w 90 -h 90 -o ../img/hoplite.png
+inkscape --without-gui knight.svg -w 90 -h 90 -o ../img/knight.png
+inkscape --without-gui lieutenant.svg -w 90 -h 90 -o ../img/lieutenant.png
+inkscape --without-gui pawn.svg -w 90 -h 90 -o ../img/pawn.png
+inkscape --without-gui pking.svg -w 90 -h 90 -o ../img/pking.png
+inkscape --without-gui queen.svg -w 90 -h 90 -o ../img/queen.png
+inkscape --without-gui rook.svg -w 90 -h 90 -o ../img/rook.png
+inkscape --without-gui sking.svg -w 90 -h 90 -o ../img/sking.png
