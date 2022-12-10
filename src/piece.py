@@ -13,6 +13,8 @@ class Piece:
     # CONSTANTS #
     #############
     EMPTY: int = -1
+    WHITE: int = -2
+    BLACK: int = -3
 
     # Persian (White) piece ids
     PAWN: int = 0
@@ -63,6 +65,7 @@ class Piece:
     # INSTANCE VARIABLES #
     ######################
     pieceId: int
+    pieceColor: bool
     pieceRank: int
     pieceFile: int
 
@@ -80,6 +83,12 @@ class Piece:
         file: int
         """
         self.pieceId = id
+        if id == Piece.EMPTY:
+            self.pieceColor = Piece.EMPTY
+        elif id < 10:
+            self.pieceColor = Piece.WHITE
+        else:
+            self.pieceColor = Piece.BLACK
         self.pieceRank = rank
         self.pieceFile = file
 

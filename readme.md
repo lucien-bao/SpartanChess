@@ -58,6 +58,7 @@ Info: <https://www.chessvariants.com/rules/spartan-chess>
 * Hoplites may promote on their 8th rank.
   * If one of the Kings has already been taken, they may promote to a King. Otherwise they may not promote to a King.
   * Any of the other pieces can always be promoted to.
+* Persians can castle but there is no en passant. Spartan kings cannot castle.
 * Algebraic notation uses these letters for the Spartan pieces:
   * G General
   * W Warlord

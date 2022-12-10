@@ -6,10 +6,12 @@ __author__ = "Chris Bao"
 __version__ = "0.9"
 
 # EXTERNAL IMPORTS
+from math import floor
 import pygame
 
 # INTERNAL IMPORTS
 from piece import Piece
+import moverules as mr
 
 
 class Board:
@@ -30,6 +32,9 @@ class Board:
     grid: list[list[Piece]]
     draggedR: int
     draggedF: int
+    whiteToMove: bool
+    castleShortRight: bool
+    castleLongRight: bool
 
     ###############
     # CONSTRUCTOR #
@@ -69,6 +74,8 @@ class Board:
                           Piece(Piece.WARLORD, 7, 6),
                           Piece(Piece.LIEUTENANT, 7, 7)])
 
+        self.whiteToMove = True
+        self.castleShortRight = self.castleLongRight = True
         self.draggedF = self.draggedR = -1
 
         Board.moveSound = pygame.mixer.Sound("../sound/move.wav")
@@ -128,8 +135,14 @@ class Board:
         mouseX, mouseY = pygame.mouse.get_pos()
         mouseX -= Board.X_OFFSET
         mouseY -= Board.Y_OFFSET
-        self.draggedR = 7 - int(mouseY / Piece.SIZE)
-        self.draggedF = int(mouseX / Piece.SIZE)
+
+        self.draggedR = 7 - floor(mouseY / Piece.SIZE)
+        self.draggedF = floor(mouseX / Piece.SIZE)
+
+        # out of bounds
+        if self.draggedR < 0 or self.draggedR > 7\
+                or self.draggedF < 0 or self.draggedF > 7:
+            self.draggedR = self.draggedF = -1
 
     def mouseReleased(self) -> None:
         """
@@ -146,12 +159,20 @@ class Board:
         mouseX, mouseY = pygame.mouse.get_pos()
         mouseX -= Board.X_OFFSET
         mouseY -= Board.Y_OFFSET
-        targetR = 7 - int(mouseY / Piece.SIZE)
-        targetF = int(mouseX / Piece.SIZE)
+        targetR = 7 - floor(mouseY / Piece.SIZE)
+        targetF = floor(mouseX / Piece.SIZE)
 
         # no piece selected
         if self.draggedR == -1 or self.draggedF == -1:
             return
+        # out of bounds
+        if self.draggedR < 0 or self.draggedR > 7\
+                or self.draggedF < 0 or self.draggedF > 7\
+                or targetR < 0 or targetR > 7\
+                or targetF < 0 or targetF > 7:
+            self.draggedR = self.draggedF = -1
+            return
+        # empty square selected
         if self.grid[self.draggedR][self.draggedF].pieceId == Piece.EMPTY:
             self.draggedR = self.draggedF = -1
             return
@@ -180,9 +201,15 @@ class Board:
         ---
         None
         """
-        # TODO: check for valid moves
+        if not Board.isValidMove(self.grid, startR, startF, destR, destF,
+                                 self.whiteToMove, self.castleShortRight,
+                                 self.castleLongRight):
+            # play invalid sound
+            return
+
+        # TODO: update castling rights if king or rook, also update if
+        # piece captures a rook
         if self.grid[destR][destF].pieceId == Piece.EMPTY:
-            print("play move")
             Board.moveSound.play()
         else:
             Board.captureSound.play()
@@ -192,3 +219,67 @@ class Board:
         self.grid[startR][startF] = Piece(Piece.EMPTY,
                                           startR,
                                           startF)
+        self.whiteToMove = not self.whiteToMove
+
+    def isValidMove(grid: list[list[Piece]], startR: int, startF: int,
+                    destR: int, destF: int, whiteToMove: bool,
+                    castleShort: bool, castleLong: bool) -> bool:
+        """
+        Checks if a given move is legal.
+
+        Parameters
+        ---
+        grid: list[list[Piece]] matrix representing the board state
+        startR: int starting rank of piece
+        startF: int starting file of piece
+        destR: int destination rank of piece
+        destF: int destination file of piece
+        whiteToMove: bool
+        castleShort: bool whether White retains short castling rights
+        castleLong: bool whether White retains long castling rights
+
+        Returns
+        ---
+        bool
+        """
+        # if piece is wrong color, don't allow move
+        if (grid[startR][startF].pieceColor == Piece.WHITE) != whiteToMove:
+            return False
+
+        # TODO: take into account moving into check
+
+        # check if destination square is in the matrix of possible moves
+        return Board.findValidMoves(grid, startR, startF,
+                                    castleShort, castleLong)[destR][destF]
+
+    def findValidMoves(grid: list[list[Piece]], rank: int, file: int,
+                       castleShort: bool, castleLong: bool) -> list[list[bool]]:
+        """
+        Find all legal moves for the given board and piece to move.
+
+        Parameters
+        ---
+        grid: list[list[Piece]] board state
+        rank: int
+        file: int
+        castleShort: bool whether White retains short castle rights
+        castleLong: bool whether White retains long castle rights
+
+        Returns
+        ---
+        list[list[bool]]: matrix of possible moves
+        """
+        match grid[rank][file].pieceId:
+            case Piece.PAWN:
+                return mr.findPawnMoves(grid, rank, file)
+            case Piece.KNIGHT:
+                return mr.findKnightMoves(grid, rank, file)
+            case Piece.BISHOP:
+                return mr.findBishopMoves(grid, rank, file)
+            case Piece.ROOK:
+                return mr.findRookMoves(grid, rank, file)
+            case Piece.QUEEN:
+                return mr.findQueenMoves(grid, rank, file)
+            case Piece.PKING:
+                return mr.findKingMoves(grid, rank, file, castleShort, castleLong)
+        return [[True]*8 for i in range(8)]
