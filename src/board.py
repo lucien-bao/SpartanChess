@@ -80,6 +80,7 @@ class Board:
 
         Board.moveSound = pygame.mixer.Sound("../sound/move.wav")
         Board.captureSound = pygame.mixer.Sound("../sound/capture.wav")
+        Board.errorSound = pygame.mixer.Sound("../sound/error.wav")
         Board.lowTimeSound = pygame.mixer.Sound("../sound/lowTime.wav")
         Board.gameEndSound = pygame.mixer.Sound("../sound/gameEnd.wav")
 
@@ -201,18 +202,29 @@ class Board:
         ---
         None
         """
+        # TODO: handle promotion
+        # check if valid move
         if not Board.isValidMove(self.grid, startR, startF, destR, destF,
                                  self.whiteToMove, self.castleShortRight,
                                  self.castleLongRight):
-            # play invalid sound
+            Board.errorSound.play()
             return
 
-        # TODO: update castling rights if king or rook, also update if
-        # piece captures a rook
+        # update castling rights
+        if (startR, startF) == (0, 4):
+            self.castleLongRight = self.castleShortRight = False
+        if (startR, startF) == (0, 0) or (destR, destF) == (0, 0):
+            self.castleLongRight = False
+        if (startR, startF) == (0, 7) or (destR, destF) == (0, 7):
+            self.castleShortRight = False
+
+        # play sound effect
         if self.grid[destR][destF].pieceId == Piece.EMPTY:
             Board.moveSound.play()
         else:
             Board.captureSound.play()
+
+        # update board
         self.grid[destR][destF] = self.grid[startR][startF]
         self.grid[destR][destF].pieceRank = destR
         self.grid[destR][destF].pieceFile = destF
@@ -281,5 +293,17 @@ class Board:
             case Piece.QUEEN:
                 return mr.findQueenMoves(grid, rank, file)
             case Piece.PKING:
-                return mr.findKingMoves(grid, rank, file, castleShort, castleLong)
-        return [[True]*8 for i in range(8)]
+                return mr.findPersianKingMoves(grid, rank, file, castleShort, castleLong)
+
+            case Piece.HOPLITE:
+                return mr.findHopliteMoves(grid, rank, file)
+            case Piece.LIEUTENANT:
+                return mr.findLieutenantMoves(grid, rank, file)
+            case Piece.CAPTAIN:
+                return mr.findCaptainMoves(grid, rank, file)
+            case Piece.GENERAL:
+                return mr.findGeneralMoves(grid, rank, file)
+            case Piece.WARLORD:
+                return mr.findWarlordMoves(grid, rank, file)
+            case Piece.SKING:
+                return mr.findSpartanKingMoves(grid, rank, file)
