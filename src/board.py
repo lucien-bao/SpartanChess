@@ -8,6 +8,7 @@ __version__ = "0.9"
 # EXTERNAL IMPORTS
 from math import floor
 import pygame
+from pygame import gfxdraw
 
 # INTERNAL IMPORTS
 from piece import Piece
@@ -25,6 +26,7 @@ class Board:
     """displacement between board and top of window"""
     LIGHT_SQUARE_COLOR: tuple[int, int, int] = (255, 187, 255)
     DARK_SQUARE_COLOR: tuple[int, int, int] = (183, 95, 191)
+    HIGHLIGHT_COLOR: tuple[int, int, int] = (115, 14, 125)
 
     ######################
     # INSTANCE VARIABLES #
@@ -116,7 +118,33 @@ class Board:
                 if rank != self.draggedR or file != self.draggedF:
                     self.grid[rank][file].draw(surface)
 
+        # piece is selected
         if self.draggedR != -1 and self.draggedF != -1:
+            # draw valid move indicators
+            valid = Board.findValidMoves(self.grid, self.draggedR, self.draggedF,
+                                         self.castleShortRight, self.castleLongRight)
+            for rank in range(8):
+                for file in range(8):
+                    if valid is not None and valid[rank][file] == mr.CAPTURE:
+                        rect = pygame.Rect(Board.X_OFFSET + file * Piece.SIZE,
+                                           Board.Y_OFFSET +
+                                           (7-rank) * Piece.SIZE,
+                                           Piece.SIZE,
+                                           Piece.SIZE)
+                        pygame.draw.rect(surface, Board.HIGHLIGHT_COLOR,
+                                         rect, width=Piece.SIZE // 12)
+                    elif valid is not None and valid[rank][file] != mr.ILLEGAL:
+                        squareCenter = (int(Board.X_OFFSET + (file + 0.5) * Piece.SIZE),
+                                        int(Board.Y_OFFSET + (7 - rank + 0.5) * Piece.SIZE))
+
+                        # smooth the edge
+                        for i in range(3):
+                            gfxdraw.aacircle(surface, squareCenter[0], squareCenter[1],
+                                             int(Piece.SIZE / 6.5) - i, Board.HIGHLIGHT_COLOR)
+                        pygame.draw.circle(surface, Board.HIGHLIGHT_COLOR,
+                                           squareCenter, Piece.SIZE / 6.5)
+
+            # draw dragged piece
             mouseX, mouseY = pygame.mouse.get_pos()
             self.grid[self.draggedR][self.draggedF].draw(surface,
                                                          mouseX, mouseY)
@@ -139,6 +167,11 @@ class Board:
 
         self.draggedR = 7 - floor(mouseY / Piece.SIZE)
         self.draggedF = floor(mouseX / Piece.SIZE)
+
+        # if piece is wrong color, don't allow move
+        if (self.grid[self.draggedR][self.draggedF].pieceColor == Piece.WHITE)\
+                != self.whiteToMove:
+            self.draggedR = self.draggedF = -1
 
         # out of bounds
         if self.draggedR < 0 or self.draggedR > 7\
@@ -254,10 +287,6 @@ class Board:
         ---
         bool
         """
-        # if piece is wrong color, don't allow move
-        if (grid[startR][startF].pieceColor == Piece.WHITE) != whiteToMove:
-            return False
-
         # TODO: take into account moving into check
 
         # check if destination square is in the matrix of possible moves

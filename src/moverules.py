@@ -286,10 +286,10 @@ def findHopliteMoves(grid: list[list[Piece]],
         else:
             validMatrix[rank-1][file+1] = MOVE
     # starting double-step move southwest
-    if file >= 2 and grid[rank-2][file-2].pieceId == Piece.EMPTY:
+    if rank == 6 and file >= 2 and grid[rank-2][file-2].pieceId == Piece.EMPTY:
         validMatrix[rank-2][file-2] = MOVE
     # starting double-step move southeast
-    if file <= 5 and grid[rank-2][file+2].pieceId == Piece.EMPTY:
+    if rank == 6 and file <= 5 and grid[rank-2][file+2].pieceId == Piece.EMPTY:
         validMatrix[rank-2][file+2] = MOVE
     # capture forward
     if grid[rank-1][file].pieceColor == Piece.WHITE:
