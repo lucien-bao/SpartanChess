@@ -41,6 +41,17 @@ Info: <https://www.chessvariants.com/rules/spartan-chess>
 * King
   * Move or capture 1 square in all directions
 
+#### Piece icons
+
+|Piece|Icon|
+|---|---|
+|Hoplite|Spartan shield (round with chevron)|
+|Lieutenant|Crossed spears|
+|Captain|Broadsword|
+|General|Chariot|
+|Warlord|Bow|
+|King|Crown of laurels|
+
 ### Objective
 
 * Spartans

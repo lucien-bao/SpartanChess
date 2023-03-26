@@ -14,6 +14,9 @@ from pygame import gfxdraw
 from piece import Piece
 import moverules as mr
 
+# DEBUG SWITCH
+_ATTACK_DEBUG: bool = False
+
 
 class Board:
     #############
@@ -27,6 +30,7 @@ class Board:
     LIGHT_SQUARE_COLOR: tuple[int, int, int] = (255, 187, 255)
     DARK_SQUARE_COLOR: tuple[int, int, int] = (183, 95, 191)
     HIGHLIGHT_COLOR: tuple[int, int, int] = (115, 14, 125)
+    DEBUG_COLOR: tuple[int, int, int] = (255, 255, 0)
 
     ######################
     # INSTANCE VARIABLES #
@@ -37,6 +41,17 @@ class Board:
     whiteToMove: bool
     castleShortRight: bool
     castleLongRight: bool
+    # either Piece.WHITE, Piece.BLACK, or Piece.EMPTY
+    promoting: int
+    promotionFile: int
+    promotionOriginalPosition: tuple[int, int]
+    blackKingCount: int
+
+    moveSound: pygame.mixer.Sound
+    captureSound: pygame.mixer.Sound
+    lowTimeSound: pygame.mixer.Sound
+    errorSound: pygame.mixer.Sound
+    gameEndSound: pygame.mixer.Sound
 
     ###############
     # CONSTRUCTOR #
@@ -79,6 +94,10 @@ class Board:
         self.whiteToMove = True
         self.castleShortRight = self.castleLongRight = True
         self.draggedF = self.draggedR = -1
+        self.promoting = Piece.EMPTY
+        self.promotionFile = -1
+        self.promotionOriginalPosition = (-1, -1)
+        self.blackKingCount = 2
 
         Board.moveSound = pygame.mixer.Sound("../sound/move.wav")
         Board.captureSound = pygame.mixer.Sound("../sound/capture.wav")
@@ -101,11 +120,121 @@ class Board:
         ---
         None
         """
+        self.drawStatic(surface)
+
+        if self.draggedR != -1 and self.draggedF != -1:
+            self.drawMoving(surface)
+
+        # draw promotion menu
+        if self.promoting == Piece.WHITE:
+            # draw menu column
+            rect = pygame.Rect(Board.X_OFFSET + self.promotionFile * Piece.SIZE,
+                               Board.Y_OFFSET,
+                               Piece.SIZE,
+                               Piece.SIZE * 4.5)
+            pygame.draw.rect(surface,
+                             Board.HIGHLIGHT_COLOR,
+                             rect)
+            # create piece icons
+            icons = [Piece(Piece.QUEEN, 7, self.promotionFile),
+                     Piece(Piece.KNIGHT, 6, self.promotionFile),
+                     Piece(Piece.ROOK, 5, self.promotionFile),
+                     Piece(Piece.BISHOP, 4, self.promotionFile)]
+            for icon in icons:
+                icon.draw(surface)
+            # draw cancel 'x' button
+            top_left = (Board.X_OFFSET + (self.promotionFile + 0.4) * Piece.SIZE,
+                        Board.Y_OFFSET + 4.15 * Piece.SIZE)
+            bottom_right = (Board.X_OFFSET + (self.promotionFile + 0.6) * Piece.SIZE,
+                            Board.Y_OFFSET + 4.35 * Piece.SIZE)
+            top_right = (Board.X_OFFSET + (self.promotionFile + 0.6) * Piece.SIZE,
+                         Board.Y_OFFSET + 4.15 * Piece.SIZE)
+            bottom_left = (Board.X_OFFSET + (self.promotionFile + 0.4) * Piece.SIZE,
+                           Board.Y_OFFSET + 4.35 * Piece.SIZE)
+            pygame.draw.line(surface, Board.LIGHT_SQUARE_COLOR,
+                             top_left, bottom_right, width=3)
+            pygame.draw.line(surface, Board.LIGHT_SQUARE_COLOR,
+                             top_right, bottom_left, width=3)
+        elif self.promoting == Piece.BLACK:
+            # draw menu column
+            # note that Black can promote to king if has only one
+            rect = pygame.Rect(Board.X_OFFSET + self.promotionFile * Piece.SIZE,
+                               Board.Y_OFFSET + Piece.SIZE *
+                               (3.5 if self.blackKingCount == 2 else 2.5),
+                               Piece.SIZE,
+                               Piece.SIZE * (4.5 if self.blackKingCount == 2 else 5.5))
+            pygame.draw.rect(surface,
+                             Board.HIGHLIGHT_COLOR,
+                             rect)
+            # create piece icons
+            icons = [Piece(Piece.LIEUTENANT, 3, self.promotionFile),
+                     Piece(Piece.CAPTAIN, 2, self.promotionFile),
+                     Piece(Piece.WARLORD, 1, self.promotionFile),
+                     Piece(Piece.GENERAL, 0, self.promotionFile)]
+            if self.blackKingCount < 2:
+                icons.append(Piece(Piece.SKING, 4, self.promotionFile))
+            for icon in icons:
+                icon.draw(surface)
+            # draw cancel 'x' button
+            top_left = (Board.X_OFFSET + (self.promotionFile + 0.4) * Piece.SIZE,
+                        Board.Y_OFFSET + Piece.SIZE * (3.65 if self.blackKingCount == 2 else 2.65))
+            bottom_right = (Board.X_OFFSET + (self.promotionFile + 0.6) * Piece.SIZE,
+                            Board.Y_OFFSET + Piece.SIZE * (3.85 if self.blackKingCount == 2 else 2.85))
+            top_right = (Board.X_OFFSET + (self.promotionFile + 0.6) * Piece.SIZE,
+                         Board.Y_OFFSET + Piece.SIZE * (3.65 if self.blackKingCount == 2 else 2.65))
+            bottom_left = (Board.X_OFFSET + (self.promotionFile + 0.4) * Piece.SIZE,
+                           Board.Y_OFFSET + Piece.SIZE * (3.85 if self.blackKingCount == 2 else 2.85))
+            pygame.draw.line(surface, Board.LIGHT_SQUARE_COLOR,
+                             top_left, bottom_right, width=3)
+            pygame.draw.line(surface, Board.LIGHT_SQUARE_COLOR,
+                             top_right, bottom_left, width=3)
+
+        # show squares attacked by opponent; for debug purposes
+        if _ATTACK_DEBUG:
+            attacked = mr.findAttackedSquares(self.grid, not self.whiteToMove)
+            for rank in range(8):
+                for file in range(8):
+                    if attacked[rank, file]:
+                        squareCenter = (int(Board.X_OFFSET + (file + 0.5) * Piece.SIZE),
+                                        int(Board.Y_OFFSET + (7 - rank + 0.5) * Piece.SIZE))
+                        pygame.draw.circle(surface, Board.DEBUG_COLOR,
+                                           squareCenter, Piece.SIZE / 6.5)
+
+    def drawStatic(self, surface: pygame.Surface) -> None:
+        """
+        Draw the board and static pieces (those not being moved) to the
+        given surface. Also draws the highlight on the target square (if valid)
+        when dragging.
+
+        Parameters
+        ---
+        surface: pygame.Surface to draw on
+
+        Returns
+        ---
+        None
+        """
         for rank in range(8):
             for file in range(8):
-                # draw square
+                # light vs. dark square colors
                 color = Board.LIGHT_SQUARE_COLOR if (rank+file) % 2 == 1\
                     else Board.DARK_SQUARE_COLOR
+
+                # change color to highlight if targeted square
+                # and is a valid move
+                if self.draggedR != -1 and self.draggedF != -1:
+                    mouseX, mouseY = pygame.mouse.get_pos()
+                    mouseX -= Board.X_OFFSET
+                    mouseY -= Board.Y_OFFSET
+                    targetR = 7 - floor(mouseY / Piece.SIZE)
+                    targetF = floor(mouseX / Piece.SIZE)
+                    valid = Board.findValidMoves(self.grid, self.draggedR, self.draggedF,
+                                                 self.castleShortRight, self.castleLongRight,
+                                                 self.blackKingCount)
+                    if rank == targetR and file == targetF and valid[rank][file]:
+                        color = Board.HIGHLIGHT_COLOR
+
+                # draw square
                 rect = pygame.Rect(Board.X_OFFSET + file * Piece.SIZE,
                                    Board.Y_OFFSET + (7-rank) * Piece.SIZE,
                                    Piece.SIZE,
@@ -118,40 +247,54 @@ class Board:
                 if rank != self.draggedR or file != self.draggedF:
                     self.grid[rank][file].draw(surface)
 
-        # piece is selected
-        if self.draggedR != -1 and self.draggedF != -1:
-            # draw valid move indicators
-            valid = Board.findValidMoves(self.grid, self.draggedR, self.draggedF,
-                                         self.castleShortRight, self.castleLongRight)
-            for rank in range(8):
-                for file in range(8):
-                    if valid is not None and valid[rank][file] == mr.CAPTURE:
-                        rect = pygame.Rect(Board.X_OFFSET + file * Piece.SIZE,
-                                           Board.Y_OFFSET +
-                                           (7-rank) * Piece.SIZE,
-                                           Piece.SIZE,
-                                           Piece.SIZE)
-                        pygame.draw.rect(surface, Board.HIGHLIGHT_COLOR,
-                                         rect, width=Piece.SIZE // 12)
-                    elif valid is not None and valid[rank][file] != mr.ILLEGAL:
-                        squareCenter = (int(Board.X_OFFSET + (file + 0.5) * Piece.SIZE),
-                                        int(Board.Y_OFFSET + (7 - rank + 0.5) * Piece.SIZE))
+    def drawMoving(self, surface: pygame.Surface) -> None:
+        """
+        Draw moving piece and highlights/indicators to the given surface.
 
-                        # smooth the edge
-                        for i in range(3):
-                            gfxdraw.aacircle(surface, squareCenter[0], squareCenter[1],
-                                             int(Piece.SIZE / 6.5) - i, Board.HIGHLIGHT_COLOR)
-                        pygame.draw.circle(surface, Board.HIGHLIGHT_COLOR,
-                                           squareCenter, Piece.SIZE / 6.5)
+        Parameters
+        ---
+        surface: pygame.Surface
 
-            # draw dragged piece
-            mouseX, mouseY = pygame.mouse.get_pos()
-            self.grid[self.draggedR][self.draggedF].draw(surface,
-                                                         mouseX, mouseY)
+        Returns
+        ---
+        None
+        """
+        # draw valid move indicators
+        valid = Board.findValidMoves(self.grid, self.draggedR, self.draggedF,
+                                     self.castleShortRight, self.castleLongRight,
+                                     self.blackKingCount)
+        for rank in range(8):
+            for file in range(8):
+                # valid capture -> square outline
+                if valid is not None and (valid[rank][file] == mr.CAPTURE
+                                          or valid[rank][file] == mr.PROMOTE_CAPTURE):
+                    rect = pygame.Rect(Board.X_OFFSET + file * Piece.SIZE,
+                                       Board.Y_OFFSET +
+                                       (7-rank) * Piece.SIZE,
+                                       Piece.SIZE,
+                                       Piece.SIZE)
+                    pygame.draw.rect(surface, Board.HIGHLIGHT_COLOR,
+                                     rect, width=Piece.SIZE // 12)
+                # valid move -> dot
+                elif valid is not None and valid[rank][file] != mr.ILLEGAL:
+                    squareCenter = (int(Board.X_OFFSET + (file + 0.5) * Piece.SIZE),
+                                    int(Board.Y_OFFSET + (7 - rank + 0.5) * Piece.SIZE))
+
+                    # smooth the edge
+                    for i in range(3):
+                        gfxdraw.aacircle(surface, squareCenter[0], squareCenter[1],
+                                         int(Piece.SIZE / 6.5) - i, Board.HIGHLIGHT_COLOR)
+                    pygame.draw.circle(surface, Board.HIGHLIGHT_COLOR,
+                                       squareCenter, Piece.SIZE / 6.5)
+
+        # draw dragged piece
+        mouseX, mouseY = pygame.mouse.get_pos()
+        self.grid[self.draggedR][self.draggedF].draw(surface,
+                                                     mouseX, mouseY)
 
     def mousePressed(self) -> None:
         """
-        Handle mouse-press events. Manages movement of pieces.
+        Handle mouse-press events. Manages movement of pieces and promotion.
 
         Parameters
         ---
@@ -169,18 +312,95 @@ class Board:
         self.draggedF = floor(mouseX / Piece.SIZE)
 
         # if piece is wrong color, don't allow move
-        if (self.grid[self.draggedR][self.draggedF].pieceColor == Piece.WHITE)\
-                != self.whiteToMove:
-            self.draggedR = self.draggedF = -1
+        if self.promoting == Piece.WHITE:
+            # check for piece selection
+            if self.draggedF == self.promotionFile and\
+                    5 <= self.draggedR < 8:
+                # add piece at promotion square depending on menu choice
+                match(self.draggedR):
+                    case 7:
+                        self.grid[7][self.promotionFile] = Piece(
+                            Piece.QUEEN, 7, self.promotionFile)
+                    case 6:
+                        self.grid[7][self.promotionFile] = Piece(
+                            Piece.KNIGHT, 7, self.promotionFile)
+                    case 5:
+                        self.grid[7][self.promotionFile] = Piece(
+                            Piece.ROOK, 7, self.promotionFile)
+                    case 4:
+                        self.grid[7][self.promotionFile] = Piece(
+                            Piece.BISHOP, 7, self.promotionFile)
+                self.promoting = Piece.EMPTY
+                self.promotionFile = -1
+                self.promotionOriginalPosition = (-1, -1)
+                # stop dragging; prevents minor highlight
+                # glitch when promoting to queen
+                self.draggedF = self.draggedR = -1
+                return
+            # if click on board otherwise, cancel promotion
+            elif 0 <= self.draggedF < 8 and\
+                    0 <= self.draggedR < 8:
+                # add back pawn
+                r, f = self.promotionOriginalPosition
+                self.grid[r][f] = Piece(Piece.PAWN, r, f)
+                self.promoting = Piece.EMPTY
+                self.promotionFile = -1
+                self.promotionOriginalPosition = (-1, -1)
+                # stop dragging; allows for normal new piece selection
+                self.draggedF = self.draggedR = -1
+        elif self.promoting == Piece.BLACK:
+            # check for piece selection
+            if self.draggedF == self.promotionFile and\
+                    0 <= self.draggedR < (4 if self.blackKingCount == 2 else 5):
+                # add piece at promotion square depending on menu choice
+                match(self.draggedR):
+                    case 0:
+                        self.grid[0][self.promotionFile] = Piece(
+                            Piece.GENERAL, 0, self.promotionFile)
+                    case 1:
+                        self.grid[0][self.promotionFile] = Piece(
+                            Piece.WARLORD, 0, self.promotionFile)
+                    case 2:
+                        self.grid[0][self.promotionFile] = Piece(
+                            Piece.CAPTAIN, 0, self.promotionFile)
+                    case 3:
+                        self.grid[0][self.promotionFile] = Piece(
+                            Piece.LIEUTENANT, 0, self.promotionFile)
+                    case 4:
+                        self.grid[0][self.promotionFile] = Piece(
+                            Piece.SKING, 0, self.promotionFile)
+                self.promoting = Piece.EMPTY
+                self.promotionFile = -1
+                self.promotionOriginalPosition = (-1, -1)
+                # stop dragging; prevents minor highlight
+                # glitch when promoting to queen
+                self.draggedF = self.draggedR = -1
+                return
+            # if click on board otherwise, cancel promotion
+            elif 0 <= self.draggedF < 8 and\
+                    0 <= self.draggedR < 8:
+                # add back pawn
+                r, f = self.promotionOriginalPosition
+                self.grid[r][f] = Piece(Piece.PAWN, r, f)
+                self.promoting = Piece.EMPTY
+                self.promotionFile = -1
+                self.promotionOriginalPosition = (-1, -1)
+                # stop dragging; allows for normal new piece selection
+                self.draggedF = self.draggedR = -1
 
-        # out of bounds
-        if self.draggedR < 0 or self.draggedR > 7\
-                or self.draggedF < 0 or self.draggedF > 7:
-            self.draggedR = self.draggedF = -1
+        else:  # self.promoting == Piece.EMPTY (normal moves)
+            if (self.grid[self.draggedR][self.draggedF].pieceColor == Piece.WHITE)\
+                    != self.whiteToMove:
+                self.draggedR = self.draggedF = -1
+
+            # out of bounds
+            if self.draggedR < 0 or self.draggedR > 7\
+                    or self.draggedF < 0 or self.draggedF > 7:
+                self.draggedR = self.draggedF = -1
 
     def mouseReleased(self) -> None:
         """
-        Handle mouse-release events. Manages movement of pieces.
+        Handle mouse-release events. Manages movement of pieces and promotion.
 
         Parameters
         ---
@@ -235,42 +455,118 @@ class Board:
         ---
         None
         """
-        # TODO: handle promotion
-        # check if valid move
-        if not Board.isValidMove(self.grid, startR, startF, destR, destF,
-                                 self.whiteToMove, self.castleShortRight,
-                                 self.castleLongRight):
-            Board.errorSound.play()
-            return
+        moveCode = Board.checkValidMove(self.grid, startR, startF, destR, destF,
+                                        self.whiteToMove, self.castleShortRight,
+                                        self.castleLongRight, self.blackKingCount)
+        match moveCode:
+            case mr.ILLEGAL:
+                Board.errorSound.play()
+                return
+            case mr.MOVE:
+                # update castling rights
+                if (startR, startF) == (0, 4):
+                    # king has moved
+                    self.castleLongRight = self.castleShortRight = False
+                if (startR, startF) == (0, 0) or (destR, destF) == (0, 0):
+                    # rook has moved or has been captured
+                    self.castleLongRight = False
+                if (startR, startF) == (0, 7) or (destR, destF) == (0, 7):
+                    # rook has moved or has been captured
+                    self.castleShortRight = False
 
-        # update castling rights
-        if (startR, startF) == (0, 4):
-            self.castleLongRight = self.castleShortRight = False
-        if (startR, startF) == (0, 0) or (destR, destF) == (0, 0):
-            self.castleLongRight = False
-        if (startR, startF) == (0, 7) or (destR, destF) == (0, 7):
-            self.castleShortRight = False
+                # play sound effect
+                Board.moveSound.play()
 
-        # play sound effect
-        if self.grid[destR][destF].pieceId == Piece.EMPTY:
-            Board.moveSound.play()
-        else:
-            Board.captureSound.play()
+                # update board
+                self.grid[destR][destF] = self.grid[startR][startF]
+                self.grid[destR][destF].pieceRank = destR
+                self.grid[destR][destF].pieceFile = destF
+                self.grid[startR][startF] = Piece(Piece.EMPTY,
+                                                  startR,
+                                                  startF)
+            case mr.CAPTURE:
+                # update castling rights
+                if (startR, startF) == (0, 4):
+                    # king has moved
+                    self.castleLongRight = self.castleShortRight = False
+                if (startR, startF) == (0, 0) or (destR, destF) == (0, 0):
+                    # rook has moved or has been captured
+                    self.castleLongRight = False
+                if (startR, startF) == (0, 7) or (destR, destF) == (0, 7):
+                    # rook has moved or has been captured
+                    self.castleShortRight = False
 
-        # update board
-        self.grid[destR][destF] = self.grid[startR][startF]
-        self.grid[destR][destF].pieceRank = destR
-        self.grid[destR][destF].pieceFile = destF
-        self.grid[startR][startF] = Piece(Piece.EMPTY,
-                                          startR,
-                                          startF)
+                # update Spartan king count if one is captured
+                if self.grid[destR][destF].pieceId == Piece.SKING:
+                    self.blackKingCount -= 1
+
+                # play sound effect
+                Board.captureSound.play()
+
+                # update board
+                self.grid[destR][destF] = self.grid[startR][startF]
+                self.grid[destR][destF].pieceRank = destR
+                self.grid[destR][destF].pieceFile = destF
+                self.grid[startR][startF] = Piece(Piece.EMPTY,
+                                                  startR,
+                                                  startF)
+            case mr.CASTLE:
+                # castle short
+                if destF in (6, 7):
+                    # move king
+                    self.grid[0][6] = self.grid[0][4]
+                    self.grid[0][6].pieceFile = 6
+                    # clear old king
+                    self.grid[0][4] = Piece(Piece.EMPTY, 0, 4)
+                    # move rook
+                    self.grid[0][5] = self.grid[0][7]
+                    self.grid[0][5].pieceFile = 5
+                    # clear old rook
+                    self.grid[0][7] = Piece(Piece.EMPTY, 0, 7)
+                # castle long
+                else:
+                    # move king
+                    self.grid[0][2] = self.grid[0][4]
+                    self.grid[0][2].pieceFile = 2
+                    # clear old king
+                    self.grid[0][4] = Piece(Piece.EMPTY, 0, 4)
+                    # move rook
+                    self.grid[0][3] = self.grid[0][0]
+                    self.grid[0][3].pieceFile = 3
+                    # clear old rook
+                    self.grid[0][0] = Piece(Piece.EMPTY, 0, 0)
+                pass
+            case mr.PROMOTE:
+                # delete pawn
+                self.grid[startR][startF] = Piece(Piece.EMPTY, startR, startF)
+                # promote pawn
+                if destR == 7:
+                    self.promoting = Piece.WHITE
+                # promote hoplite
+                else:
+                    self.promoting = Piece.BLACK
+                self.promotionFile = destF
+                self.promotionOriginalPosition = (startR, startF)
+            case mr.PROMOTE_CAPTURE:
+                # delete pawn
+                self.grid[startR][startF] = Piece(Piece.EMPTY, startR, startF)
+                # promote pawn
+                if destR == 7:
+                    self.promoting = Piece.WHITE
+                # promote hoplite
+                else:
+                    self.promoting = Piece.BLACK
+                self.promotionFile = destF
+                self.promotionOriginalPosition = (startR, startF)
+
+                # switch who is to move
         self.whiteToMove = not self.whiteToMove
 
-    def isValidMove(grid: list[list[Piece]], startR: int, startF: int,
-                    destR: int, destF: int, whiteToMove: bool,
-                    castleShort: bool, castleLong: bool) -> bool:
+    def checkValidMove(grid: list[list[Piece]], startR: int, startF: int,
+                       destR: int, destF: int, whiteToMove: bool,
+                       castleShort: bool, castleLong: bool, blackKingCount: int) -> int:
         """
-        Checks if a given move is legal.
+        Checks if a given move is legal and returns a code specifying move type.
 
         Parameters
         ---
@@ -282,19 +578,61 @@ class Board:
         whiteToMove: bool
         castleShort: bool whether White retains short castling rights
         castleLong: bool whether White retains long castling rights
+        blackKingCount: int number of Spartan kings left
 
         Returns
         ---
-        bool
+        int: the corresponding move code inside the module moverules. 0: illegal,
+        1: move, 2: capture, 3: castle, 4: promotion, 5: promotion capture
         """
-        # TODO: take into account moving into check
+
+        gridCopy = Board.copyGrid(grid)
+        gridCopy[destR][destF] = gridCopy[startR][startF]
+        gridCopy[destR][destF].pieceRank = destR
+        gridCopy[destR][destF].pieceFile = destF
+        gridCopy[startR][startF] = Piece(Piece.EMPTY,
+                                         startR,
+                                         startF)
+        attackedMatrix = mr.findAttackedSquares(gridCopy, not whiteToMove)
+        if whiteToMove:
+            for rank in range(8):
+                for file in range(8):
+                    if gridCopy[rank][file].pieceId == Piece.PKING and\
+                            attackedMatrix[rank, file]:
+                        return mr.ILLEGAL
+        else:
+            numInCheck = 0
+            for rank in range(8):
+                for file in range(8):
+                    if gridCopy[rank][file].pieceId == Piece.SKING and\
+                            attackedMatrix[rank, file]:
+                        numInCheck += 1
+            if numInCheck == blackKingCount:
+                return mr.ILLEGAL
 
         # check if destination square is in the matrix of possible moves
         return Board.findValidMoves(grid, startR, startF,
-                                    castleShort, castleLong)[destR][destF]
+                                    castleShort, castleLong,
+                                    blackKingCount)[destR][destF]
+
+    def copyGrid(grid: list[list[Piece]]) -> list[list[Piece]]:
+        """
+        Returns a copy of the given board state.
+
+        Parameters
+        ---
+        grid: list[list[Piece]]
+
+        Returns
+        ---
+        list[list[Piece]]
+        """
+        return [[Piece(grid[rank][file].pieceId, rank, file)
+                 for file in range(8)] for rank in range(8)]
 
     def findValidMoves(grid: list[list[Piece]], rank: int, file: int,
-                       castleShort: bool, castleLong: bool) -> list[list[bool]]:
+                       castleShort: bool, castleLong: bool,
+                       numSpartanKings: int) -> list[list[int]]:
         """
         Find all legal moves for the given board and piece to move.
 
@@ -308,7 +646,7 @@ class Board:
 
         Returns
         ---
-        list[list[bool]]: matrix of possible moves
+        list[list[int]]: matrix of possible moves
         """
         match grid[rank][file].pieceId:
             case Piece.PAWN:
@@ -335,4 +673,7 @@ class Board:
             case Piece.WARLORD:
                 return mr.findWarlordMoves(grid, rank, file)
             case Piece.SKING:
-                return mr.findSpartanKingMoves(grid, rank, file)
+                return mr.findSpartanKingMoves(grid, rank, file, numSpartanKings)
+
+        # empty square, obviously no legal ways to move
+        return [[mr.ILLEGAL]*8 for _ in range(8)]
