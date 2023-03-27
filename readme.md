@@ -46,8 +46,8 @@ Info: <https://www.chessvariants.com/rules/spartan-chess>
 |Piece|Icon|
 |---|---|
 |Hoplite|Spartan shield (round with chevron)|
-|Lieutenant|Crossed spears|
-|Captain|Broadsword|
+|Lieutenant|Spears pointing out from bottom center|
+|Captain|Crossed swords|
 |General|Chariot|
 |Warlord|Bow|
 |King|Crown of laurels|

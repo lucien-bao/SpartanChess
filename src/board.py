@@ -3,7 +3,7 @@
 ranks 1 to 8 and files a to h."""
 
 __author__ = "Chris Bao"
-__version__ = "0.9"
+__version__ = "1.0"
 
 # EXTERNAL IMPORTS
 from math import floor
@@ -12,6 +12,7 @@ from pygame import gfxdraw
 
 # INTERNAL IMPORTS
 from piece import Piece
+from ui import UI
 import moverules as mr
 
 # DEBUG SWITCH
@@ -29,8 +30,19 @@ class Board:
     """displacement between board and top of window"""
     LIGHT_SQUARE_COLOR: tuple[int, int, int] = (255, 187, 255)
     DARK_SQUARE_COLOR: tuple[int, int, int] = (183, 95, 191)
-    HIGHLIGHT_COLOR: tuple[int, int, int] = (115, 14, 125)
+    LAST_MOVE_COLOR: tuple[int, int, int] = (128, 40, 136)
+    HIGHLIGHT_COLOR: tuple[int, int, int] = (95, 7, 95)
     DEBUG_COLOR: tuple[int, int, int] = (255, 255, 0)
+
+    ONGOING: int = 0
+    CHECKMATE: int = 1
+    STALEMATE: int = 2
+
+    MOVED_EVENT: int = pygame.USEREVENT + 10
+    CAPTURE_EVENT: int = pygame.USEREVENT + 11
+    WHITE_CHECKMATE_EVENT: int = pygame.USEREVENT + 12
+    BLACK_CHECKMATE_EVENT: int = pygame.USEREVENT + 13
+    STALEMATE_EVENT: int = pygame.USEREVENT + 14
 
     ######################
     # INSTANCE VARIABLES #
@@ -41,11 +53,16 @@ class Board:
     whiteToMove: bool
     castleShortRight: bool
     castleLongRight: bool
-    # either Piece.WHITE, Piece.BLACK, or Piece.EMPTY
-    promoting: int
+
+    promoting: int  # either Piece.WHITE, Piece.BLACK, or Piece.EMPTY
     promotionFile: int
     promotionOriginalPosition: tuple[int, int]
     blackKingCount: int
+
+    lastStartR: int
+    lastStartF: int
+    lastDestR: int
+    lastDestF: int
 
     moveSound: pygame.mixer.Sound
     captureSound: pygame.mixer.Sound
@@ -61,7 +78,7 @@ class Board:
         Constructor.
         Parameters
         ---
-        (no parameters)
+        ui: UI the external UI that should be updated by this board.
 
         Returns
         ---
@@ -98,6 +115,10 @@ class Board:
         self.promotionFile = -1
         self.promotionOriginalPosition = (-1, -1)
         self.blackKingCount = 2
+        self.lastStartR = None
+        self.lastStartF = None
+        self.lastDestR = None
+        self.lastDestF = None
 
         Board.moveSound = pygame.mixer.Sound("../sound/move.wav")
         Board.captureSound = pygame.mixer.Sound("../sound/capture.wav")
@@ -220,6 +241,11 @@ class Board:
                 color = Board.LIGHT_SQUARE_COLOR if (rank+file) % 2 == 1\
                     else Board.DARK_SQUARE_COLOR
 
+                if self.lastStartR is not None:
+                    if rank == self.lastStartR and file == self.lastStartF or\
+                            rank == self.lastDestR and file == self.lastDestF:
+                        color = Board.LAST_MOVE_COLOR
+
                 # change color to highlight if targeted square
                 # and is a valid move
                 if self.draggedR != -1 and self.draggedF != -1:
@@ -311,6 +337,12 @@ class Board:
         self.draggedR = 7 - floor(mouseY / Piece.SIZE)
         self.draggedF = floor(mouseX / Piece.SIZE)
 
+        # out of bounds
+        if self.draggedR < 0 or self.draggedR > 7\
+                or self.draggedF < 0 or self.draggedF > 7:
+            self.draggedR = self.draggedF = -1
+            return
+
         # if piece is wrong color, don't allow move
         if self.promoting == Piece.WHITE:
             # check for piece selection
@@ -391,11 +423,6 @@ class Board:
         else:  # self.promoting == Piece.EMPTY (normal moves)
             if (self.grid[self.draggedR][self.draggedF].pieceColor == Piece.WHITE)\
                     != self.whiteToMove:
-                self.draggedR = self.draggedF = -1
-
-            # out of bounds
-            if self.draggedR < 0 or self.draggedR > 7\
-                    or self.draggedF < 0 or self.draggedF > 7:
                 self.draggedR = self.draggedF = -1
 
     def mouseReleased(self) -> None:
@@ -485,6 +512,10 @@ class Board:
                                                   startR,
                                                   startF)
             case mr.CAPTURE:
+                # communicate the captured piece so that the UI can update
+                pygame.event.post(pygame.event.Event(
+                    Board.CAPTURE_EVENT, pieceType=self.grid[destR][destF].pieceId))
+
                 # update castling rights
                 if (startR, startF) == (0, 4):
                     # king has moved
@@ -559,8 +590,76 @@ class Board:
                 self.promotionFile = destF
                 self.promotionOriginalPosition = (startR, startF)
 
-                # switch who is to move
+        self.lastStartR = startR
+        self.lastStartF = startF
+        self.lastDestR = destR
+        self.lastDestF = destF
+
+        # switch who is to move
         self.whiteToMove = not self.whiteToMove
+        pygame.event.post(pygame.event.Event(Board.MOVED_EVENT))
+
+        # check for game end condition
+        gameOverState = self.checkGameOver()
+        match gameOverState:
+            case Board.ONGOING:
+                return
+            case Board.CHECKMATE:
+                if self.whiteToMove:
+                    pygame.event.post(pygame.event.Event(
+                        Board.WHITE_CHECKMATE_EVENT))
+                else:
+                    pygame.event.post(pygame.event.Event(
+                        Board.BLACK_CHECKMATE_EVENT))
+            case Board.STALEMATE:
+                pygame.event.post(pygame.event.Event(Board.STALEMATE_EVENT))
+        self.gameEndSound.play()
+
+    def checkGameOver(self) -> int:
+        """
+        Checks for game-ending conditions.
+
+        Parameters
+        ---
+        (no parameters)
+
+        Returns
+        ---
+        int: 0 if game not over, 1 if checkmate, 2 if stalemate
+        """
+        # check all possible moves
+        for rank0 in range(8):
+            for file0 in range(8):
+                if self.grid[rank0][file0].pieceColor == Piece.WHITE and not self.whiteToMove\
+                        or self.grid[rank0][file0].pieceColor == Piece.BLACK and self.whiteToMove:
+                    continue
+                for rank1 in range(8):
+                    for file1 in range(8):
+                        if Board.checkValidMove(self.grid, rank0, file0, rank1, file1,
+                                                self.whiteToMove, self.castleShortRight,
+                                                self.castleLongRight, self.blackKingCount):
+                            return 0
+        # no valid moves, see if checkmate or stalemate
+        if self.whiteToMove:
+            attackedMatrix = mr.findAttackedSquares(self.grid, False)
+            for rank in range(8):
+                for file in range(8):
+                    if self.grid[rank][file].pieceId == Piece.PKING and\
+                            attackedMatrix[rank, file]:
+                        return 1
+        else:
+            attackedMatrix = mr.findAttackedSquares(self.grid, True)
+            numInCheck = 0
+            for rank in range(8):
+                for file in range(8):
+                    if self.grid[rank][file].pieceId == Piece.SKING and\
+                            attackedMatrix[rank, file]:
+                        numInCheck += 1
+            if numInCheck == self.blackKingCount:
+                return 1
+
+        # not in check and no valid moves, stalemate
+        return 2
 
     def checkValidMove(grid: list[list[Piece]], startR: int, startF: int,
                        destR: int, destF: int, whiteToMove: bool,
@@ -585,7 +684,11 @@ class Board:
         int: the corresponding move code inside the module moverules. 0: illegal,
         1: move, 2: capture, 3: castle, 4: promotion, 5: promotion capture
         """
-
+        # Make sure piece is correct color
+        if grid[startR][startF].pieceColor == Piece.WHITE and not whiteToMove or\
+                grid[startR][startF].pieceColor == Piece.BLACK and whiteToMove:
+            return mr.ILLEGAL
+        # Make sure we aren't moving into check
         gridCopy = Board.copyGrid(grid)
         gridCopy[destR][destF] = gridCopy[startR][startF]
         gridCopy[destR][destF].pieceRank = destR

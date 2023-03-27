@@ -9,3 +9,4 @@ inkscape --without-gui pking.svg -w 90 -h 90 -o ../img/pking.png
 inkscape --without-gui queen.svg -w 90 -h 90 -o ../img/queen.png
 inkscape --without-gui rook.svg -w 90 -h 90 -o ../img/rook.png
 inkscape --without-gui sking.svg -w 90 -h 90 -o ../img/sking.png
+inkscape --without-gui warlord.svg -w 90 -h 90 -o ../img/warlord.png

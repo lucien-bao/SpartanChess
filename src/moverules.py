@@ -2,7 +2,7 @@
 """Functions encoding move rules for SpartanChess."""
 
 __author__ = "Chris Bao"
-__version__ = "0.9"
+__version__ = "1.0"
 
 # IMPORTS
 import numpy as np
