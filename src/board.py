@@ -413,7 +413,7 @@ class Board:
                     0 <= self.draggedR < 8:
                 # add back pawn
                 r, f = self.promotionOriginalPosition
-                self.grid[r][f] = Piece(Piece.PAWN, r, f)
+                self.grid[r][f] = Piece(Piece.HOPLITE, r, f)
                 self.promoting = Piece.EMPTY
                 self.promotionFile = -1
                 self.promotionOriginalPosition = (-1, -1)
