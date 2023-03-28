@@ -542,6 +542,9 @@ class Board:
                                                   startR,
                                                   startF)
             case mr.CASTLE:
+                # play sound effect
+                Board.moveSound.play()
+
                 # castle short
                 if destF in (6, 7):
                     # move king
@@ -578,6 +581,9 @@ class Board:
                     self.promoting = Piece.BLACK
                 self.promotionFile = destF
                 self.promotionOriginalPosition = (startR, startF)
+
+                # play sound effect
+                Board.moveSound.play()
             case mr.PROMOTE_CAPTURE:
                 # delete pawn
                 self.grid[startR][startF] = Piece(Piece.EMPTY, startR, startF)
@@ -589,6 +595,9 @@ class Board:
                     self.promoting = Piece.BLACK
                 self.promotionFile = destF
                 self.promotionOriginalPosition = (startR, startF)
+
+                # play sound effect
+                Board.captureSound.play()
 
         self.lastStartR = startR
         self.lastStartF = startF
