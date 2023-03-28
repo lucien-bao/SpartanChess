@@ -380,6 +380,7 @@ class Board:
                 self.promotionOriginalPosition = (-1, -1)
                 # stop dragging; allows for normal new piece selection
                 self.draggedF = self.draggedR = -1
+                self.whiteToMove = not self.whiteToMove
         elif self.promoting == Piece.BLACK:
             # check for piece selection
             if self.draggedF == self.promotionFile and\
@@ -419,6 +420,7 @@ class Board:
                 self.promotionOriginalPosition = (-1, -1)
                 # stop dragging; allows for normal new piece selection
                 self.draggedF = self.draggedR = -1
+                self.whiteToMove = not self.whiteToMove
 
         else:  # self.promoting == Piece.EMPTY (normal moves)
             if (self.grid[self.draggedR][self.draggedF].pieceColor == Piece.WHITE)\
