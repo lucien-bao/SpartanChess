@@ -2,17 +2,17 @@
 <svg
    width="100"
    height="100"
-   viewBox="-50 -60 381.316 511.653"
+   viewBox="-50 -100 386.833 503"
    version="1.1"
-   id="svg22"
-   sodipodi:docname="lieutenant.svg"
+   id="svg24"
+   sodipodi:docname="captain.svg"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
-     id="namedview24"
+     id="namedview26"
      pagecolor="#505050"
      bordercolor="#ffffff"
      borderopacity="1"
@@ -21,27 +21,27 @@
      inkscape:pagecheckerboard="1"
      inkscape:deskcolor="#505050"
      showgrid="false"
-     inkscape:zoom="7.4278044"
-     inkscape:cx="12.857097"
-     inkscape:cy="47.12025"
-     inkscape:window-width="1904"
-     inkscape:window-height="995"
-     inkscape:window-x="8"
-     inkscape:window-y="40"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg22" />
+     inkscape:zoom="9.3887037"
+     inkscape:cx="22.473816"
+     inkscape:cy="51.338291"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg24" />
   <defs
      id="defs5">
     <clipPath
        id="clip1">
       <path
-         d="M 0 70 L 291.316406 70 L 291.316406 431.652344 L 0 431.652344 Z M 0 70 "
+         d="M 0 0 L 296.832031 0 L 296.832031 373 L 0 373 Z M 0 0 "
          id="path2" />
     </clipPath>
     <clipPath
        id="clip1-3">
       <path
-         d="M 0,70 H 291.31641 V 431.65234 H 0 Z m 0,0"
+         d="M 0,0 H 296.83203 V 373 H 0 Z m 0,0"
          id="path2-6" />
     </clipPath>
   </defs>
@@ -51,27 +51,27 @@
      inkscape:label="old"
      style="display:inline" />
   <path
-     style="fill:#4c4c4c;fill-opacity:1;stroke:none;stroke-width:33.0681;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     d="M 145.65711,2.1854816 53.457411,176.42247 l -10.791459,75.78887 45.780491,65.70707 4.139828,59.53104 52.530889,12.01596 53.61079,-12.01596 4.13982,-57.68319 45.7805,-67.55492 -19.85508,-100.61293 z"
-     id="path2013" />
+     style="fill:#4c4c4c;fill-opacity:1;stroke:none;stroke-width:32.5089;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+     d="M 10.196716,-7.4593508 91.857077,44.94299 236.17522,220.86055 l 65.29723,75.88136 -35.78802,30.89106 -64.94696,-76.1837 -14.81996,12.1503 -47.15502,-53.14529 -90.621448,-55.65063 -48.35612222,-66.743098 -0.141,-100.646868 z"
+     id="path2070" />
   <path
-     style="fill:#7f7f7f;fill-opacity:1;stroke:none;stroke-width:33.0681;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     d="m 53.457411,176.42247 -10.791459,75.78887 c 48.532823,51.37748 45.780491,65.70707 45.780491,65.70707 l 4.139828,59.53104 38.424589,1.85797 c 0,0 1.48638,-59.91033 -12.21455,-81.34413 -9.8274,-22.47304 -22.095298,-24.8128 -23.194326,-50.09006 -3.082983,-70.90757 32.911656,-172.314416 50.055126,-219.552343 0,0 -74.121967,113.938683 -92.199699,148.101583 z"
-     id="path2318"
-     sodipodi:nodetypes="ccccccscc" />
+     style="fill:#b75fbf;fill-opacity:1;stroke:none;stroke-width:32.5089;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+     d="m 12.26645,8.9123147 c 0,0 16.465511,59.6877053 43.649246,96.6234753 27.183735,36.93576 86.515904,72.28507 108.735614,95.77942 22.21971,23.49433 39.73288,47.4176 39.73288,47.4176 L 185.91751,263.59957 138.76249,210.45428 38.353468,147.82711 -2.2045814,77.164127 -2.0892506,-0.1186555 Z"
+     id="path2831"
+     sodipodi:nodetypes="czzccccccc" />
   <path
-     id="path1828-3"
-     style="fill:none;stroke:#000000;stroke-width:33.0681;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     d="m 202.86777,319.76626 c 0,0 -33.07101,14.65446 -57.21066,14.58655 -24.13965,0.0679 -57.210667,-14.58655 -57.210667,-14.58655"
-     sodipodi:nodetypes="ccc" />
+     style="fill:none;stroke:#000000;stroke-width:32.5089;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+     d="m -0.35608022,-12.586316 c 0,0 68.17886222,31.753947 92.21315722,57.529307 32.783473,35.158304 62.083283,78.066879 73.985153,93.424769 32.26847,41.63844 70.02558,82.53992 70.02558,82.53992 l -49.9503,42.69189 c 0,0 -17.38168,-34.39859 -61.98762,-63.83718 C 75.465436,167.77729 25.962178,152.42551 6.9867335,110.49126 -13.760706,64.641065 -0.35608022,-12.586316 -0.35608022,-12.586316 Z"
+     id="path571"
+     sodipodi:nodetypes="cssccssc" />
   <path
-     id="path1828-3-6-1-8"
-     style="fill:none;stroke:#000000;stroke-width:33.0681;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     d="M 145.65711,289.85458 V 99.634169"
+     style="fill:none;stroke:#000000;stroke-width:32.5089;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+     d="m 200.38719,251.75163 c 28.40658,20.02554 48.73608,46.45871 65.29724,75.88134 l 35.78802,-30.89106 -65.29724,-75.88136 -70.87548,61.17743"
+     id="path1609"
+     sodipodi:nodetypes="ccccc" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:32.5089;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+     d="m 301.47245,296.74191 -56.58654,48.84367"
+     id="path1778"
      sodipodi:nodetypes="cc" />
-  <path
-     style="fill:none;stroke:#000000;stroke-width:33.0681;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     d="m 198.72795,377.44945 c 0,0 0.0474,-47.43735 4.13982,-59.53104 8.79021,-25.97645 42.19843,-38.501 45.7805,-65.70707 C 260.42556,162.76185 145.65711,2.1854834 145.65711,2.1854834 c 0,0 -114.768447,160.5763666 -102.991157,250.0258566 3.582062,27.20607 36.990283,39.73062 45.78049,65.70707 4.092436,12.09369 4.139828,59.53104 4.139828,59.53104 0,0 20.140109,11.94808 52.530889,12.01596 32.39078,0.0679 53.61079,-12.01596 53.61079,-12.01596 z"
-     id="path1472-0-9"
-     sodipodi:nodetypes="csscsscsc" />
 </svg>
