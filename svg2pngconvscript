@@ -1,12 +1,25 @@
-inkscape --without-gui bishop.svg -w 90 -h 90 -o ../img/bishop.png
-inkscape --without-gui captain.svg -w 90 -h 90 -o ../img/captain.png
-inkscape --without-gui general.svg -w 90 -h 90 -o ../img/general.png
-inkscape --without-gui hoplite.svg -w 90 -h 90 -o ../img/hoplite.png
-inkscape --without-gui knight.svg -w 90 -h 90 -o ../img/knight.png
-inkscape --without-gui lieutenant.svg -w 90 -h 90 -o ../img/lieutenant.png
-inkscape --without-gui pawn.svg -w 90 -h 90 -o ../img/pawn.png
-inkscape --without-gui pking.svg -w 90 -h 90 -o ../img/pking.png
-inkscape --without-gui queen.svg -w 90 -h 90 -o ../img/queen.png
-inkscape --without-gui rook.svg -w 90 -h 90 -o ../img/rook.png
-inkscape --without-gui sking.svg -w 90 -h 90 -o ../img/sking.png
-inkscape --without-gui warlord.svg -w 90 -h 90 -o ../img/warlord.png
+inkscape bishop.svg -w 90 -h 90 -o ../img/bishop.png
+inkscape captain.svg -w 90 -h 90 -o ../img/captain.png
+inkscape general.svg -w 90 -h 90 -o ../img/general.png
+inkscape hoplite.svg -w 90 -h 90 -o ../img/hoplite.png
+inkscape knight.svg -w 90 -h 90 -o ../img/knight.png
+inkscape lieutenant.svg -w 90 -h 90 -o ../img/lieutenant.png
+inkscape pawn.svg -w 90 -h 90 -o ../img/pawn.png
+inkscape pking.svg -w 90 -h 90 -o ../img/pking.png
+inkscape queen.svg -w 90 -h 90 -o ../img/queen.png
+inkscape rook.svg -w 90 -h 90 -o ../img/rook.png
+inkscape sking.svg -w 90 -h 90 -o ../img/sking.png
+inkscape warlord.svg -w 90 -h 90 -o ../img/warlord.png
+
+inkscape bishop.svg -w 45 -h 45 -o ../icon/bishop.png
+inkscape captain.svg -w 45 -h 45 -o ../icon/captain.png
+inkscape general.svg -w 45 -h 45 -o ../icon/general.png
+inkscape hoplite.svg -w 45 -h 45 -o ../icon/hoplite.png
+inkscape knight.svg -w 45 -h 45 -o ../icon/knight.png
+inkscape lieutenant.svg -w 45 -h 45 -o ../icon/lieutenant.png
+inkscape pawn.svg -w 45 -h 45 -o ../icon/pawn.png
+inkscape pking.svg -w 45 -h 45 -o ../icon/pking.png
+inkscape queen.svg -w 45 -h 45 -o ../icon/queen.png
+inkscape rook.svg -w 45 -h 45 -o ../icon/rook.png
+inkscape sking.svg -w 45 -h 45 -o ../icon/sking.png
+inkscape warlord.svg -w 45 -h 45 -o ../icon/warlord.png
